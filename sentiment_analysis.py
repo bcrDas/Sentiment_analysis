@@ -1,27 +1,205 @@
-# first, we import the relevant modules from the NLTK library
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
+import pandas as pd            #Pandas
+from textblob import TextBlob #For Sentiment Anlysis
+from itertools import islice 
+import matplotlib.pyplot as plt  # For plotting graphs
+import seaborn as sns
+from IPython.display import display
 
-# next, we initialize VADER so we can use it within our Python script
-SIA = SentimentIntensityAnalyzer()
+import nltk
 
-# the variable 'message_text' now contains the text we will analyze.
-#message_text = '''Like you, I am getting very frustrated with this process. I am genuinely trying to be as reasonable as possible. I am not trying to "hold up" the deal at the last minute. I'm afraid that I am being asked to take a fairly large leap of faith after this company (I don't mean the two of you -- I mean Enron) has screwed me and the people who work for me.'''
-#message_text = '''Looks great.  I think we should have a least 1 or 2 real time traders in Calgary.'''
-#message_text = '''I think we are making great progress on the systems side.  I would like to set a deadline of November 10th to have a plan on all North American projects(I'm ok if fundementals groups are excluded) that is signed off on by commercial, Sally's world, and Beth's world.  When I say signed off I mean that I want signitures on a piece of paper that everyone is onside with the plan for each project.  If you don't agree don't sign. If certain projects(ie. the gas plan) are not done yet then lay out a timeframe that the plan will be complete.  I want much more in the way of specifics about objectives and timeframe.Thanks for everyone's hard work on this.'''
-#message_text = ''' I am super excited!!!'''
+from numpy.random import randn
+from numpy.random import seed
+from numpy import cov
+from scipy.stats import pearsonr
 
-# Continue with the same code the previous section, but replace the *message_text* variable with the new e-mail text:
-message_text = '''It seems to me we are in the middle of no man's land with respect to the  following:  Opec production speculation, Mid east crisis and renewed  tensions, US elections and what looks like a slowing economy (?), and no real weather anywhere in the world. I think it would be most prudent to play  the markets from a very flat price position and try to day trade more aggressively. I have no intentions of outguessing Mr. Greenspan, the US. electorate, the Opec ministers and their new important roles, The Israeli and Palestinian leaders, and somewhat importantly, Mother Nature.  Given that, and that we cannot afford to lose any more money, and that Var seems to be a problem, let's be as flat as possible. I'm ok with spread risk  (not front to backs, but commodity spreads). The morning meetings are not inspiring, and I don't have a real feel for  everyone's passion with respect to the markets.  As such, I'd like to ask  John N. to run the morning meetings on Mon. and Wed.  Thanks. Jeff'''
+from pylab import rcParams
 
-print("\n")
-print(message_text)
-print("\n")
+from pylab import rcParams
 
-# Calling the polarity_scores method on sid and passing in the message_text outputs a dictionary with negative, neutral, positive, and compound scores for the input text
-sentiment_scores = SIA.polarity_scores(message_text)
+from collections import Counter
+
+import matplotlib as mpl
+
+import numpy as np
+from os import path
+from PIL import Image
+from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+import random
 
 
-# Here we loop through the keys contained in scores (pos, neu, neg, and compound scores) and print the key-value pairs on the screen
-for key in sorted(sentiment_scores):
-        print('{0}: {1}, '.format(key, sentiment_scores[key]), end='')
-        print("\n")
+
+if __name__ == "__main__":
+
+
+    # Use to do sentiment analysis  and save the results as .xlsx file(If done comment it because it's resource consuming)
+    '''
+    df_data = pd.read_excel("temp.xlsx")
+    print(df_data.head())
+    print("\n")
+
+    COLS = ['date','text', 'sentiment','subjectivity','polarity']
+    df = pd.DataFrame(columns=COLS)
+    print(df)
+    print("\n")
+    #print(df_data.iterrows())
+    #print("\n")
+
+
+
+    for index, row in islice(df_data.iterrows(), 0, None):
+
+        new_entry = []
+        text_lower= (row['text'])
+        blob = TextBlob(text_lower)
+        sentiment = blob.sentiment
+
+        polarity = sentiment.polarity
+        subjectivity = sentiment.subjectivity
+             
+        new_entry += [row['tweet_created'],text_lower,sentiment,subjectivity,polarity]
+            
+        single_survey_sentimet_df = pd.DataFrame([new_entry], columns=COLS)
+        df = df.append(single_survey_sentimet_df, ignore_index=True)
+
+    df.to_excel('sentiment_analysis.xlsx')
+    print(df.head())
+    print(df.describe())
+    '''
+
+
+
+    df = pd.read_excel("sentiment_analysis.xlsx")
+    print(df.head())
+    print("\n")
+    print(df.describe())
+    print("\n")
+
+
+
+    df_filter = df.loc[(df.loc[:, df.dtypes != object] != 0).any(1)]
+    print(df_filter.describe())
+    print("\n")
+
+
+
+    #boxplot for df_filter
+    boxplot = df_filter.boxplot(column=['subjectivity','polarity'], 
+                         fontsize = 15,grid = True, vert=True,figsize=(10,10,))
+    plt.ylabel('Range')
+    plt.show()
+
+
+
+    #scatter for df_filter
+    sns.lmplot(x='subjectivity',y='polarity',data=df_filter,fit_reg=True,scatter=True, height=10,palette="mute")
+    plt.show()
+
+
+
+    #covariance and correlation for df_filter
+    # calculate the covariance between two variables
+    # prepare data
+    data_1 = df_filter['subjectivity']
+    data_2 = data_1 + df_filter['polarity']
+    # calculate covariance matrix
+    covariance = cov(data_1, data_2)
+    # calculate correlation matrix
+    correlation = pearsonr(data_1,data_2) 
+    print(covariance)
+    print("\n")
+    print(correlation)
+    print("\n")
+
+
+
+    #Polarity Distribution for df_filter
+    plt.hist(df_filter['polarity'], color = 'darkred', edgecolor = 'black', density=False,
+             bins = int(30))
+    plt.title('Polarity Distribution')
+    plt.xlabel("Polarity")
+    plt.ylabel("Number of Times")
+
+    rcParams['figure.figsize'] = 10,15
+    plt.show()
+
+
+
+    #Polarity Distribution Density for df_filter
+    sns.distplot(df_filter['polarity'], hist=True, kde=True, 
+                 bins=int(30), color = 'darkred',
+                 hist_kws={'edgecolor':'black'},axlabel ='Polarity')
+    plt.title('Polarity Density')
+
+    rcParams['figure.figsize'] = 10,15
+    plt.show()
+
+
+
+    # Frequent word finding(NLP)
+    #nltk.download() # Don't use if you already downloaded
+    stopwords = nltk.corpus.stopwords.words('english')
+
+    RE_stopwords = r'\b(?:{})\b'.format('|'.join(stopwords))
+    words = (df.text
+               .str.lower()
+               .replace([r'\|',r'\&',r'\-',r'\.',r'\,',r'\'', RE_stopwords], [' ', '','','','','',''], regex=True)
+               .str.cat(sep=' ')
+               .split()
+    )
+
+
+
+    # generate DF out of Counter
+    rslt = pd.DataFrame(Counter(words).most_common(10),
+                        columns=['Word', 'Frequency']).set_index('Word')
+    print(rslt)
+    print("\n")
+
+
+
+    # Bar and PI cahrt ploting
+    rslt_wordcloud = pd.DataFrame(Counter(words).most_common(100),
+                        columns=['Word', 'Frequency'])
+    #BAR CHART
+    rslt.plot.bar(rot=40, figsize=(16,10), width=0.8,colormap='tab10')
+    plt.title("Commanly used words by Clients (SurveyData - Q7 )")
+    plt.ylabel("Count")
+    plt.show()
+
+    from pylab import rcParams
+    rcParams['figure.figsize'] = 10,15
+
+    #PIE CHART
+
+    explode = (0.1, 0.12, 0.122, 0,0,0,0,0,0,0)  # explode 1st slice
+    labels=['@united',
+            'flight',
+            '@usairways',
+            '@amaricamair',
+            '@southwestair',
+            '@jetblue',
+            'get',
+            'cancelled',
+            'thanks',
+            'service']
+
+    plt.pie(rslt['Frequency'], explode=explode,labels =labels , autopct='%1.1f%%',
+            shadow=False, startangle=90)
+    plt.legend( labels, loc='lower left',fontsize='x-small',markerfirst = True)
+    plt.tight_layout()
+    plt.title(' Commanly used words in tweets')
+    plt.show()
+
+    mpl.rcParams['font.size'] = 15.0
+
+
+
+
+    # Wordcloud
+    wordcloud = WordCloud(max_font_size=60, max_words=100, width=480, height=380,colormap="brg",
+                          background_color="white").generate(' '.join(rslt_wordcloud['Word']))
+                          
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis("off")
+    plt.figure(figsize=[10,10])
+    plt.show()
